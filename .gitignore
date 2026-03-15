@@ -201,3 +201,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Debugger / temporary files
+*.log
+*.tmp
+*.vscode/
+.cursor/
