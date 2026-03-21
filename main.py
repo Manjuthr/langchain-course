@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.tools import Tool
+from typing import List
+from pydantic import BaseModel, Field
 
 load_dotenv()
 from langchain.agents import create_agent
@@ -14,17 +16,26 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_ollama import ChatOllama
 
 
+class Source(BaseModel):
+    """Schema for a source used by the agent"""
+    url:str = Field(description = "The URL of the source")
+
+class AgentResponse(BaseModel):
+    """Schema for agent response with answer and source"""
+    answer:str = Field(description = "The agent's answer to the query")
+    sources: List[Source] = Field(default_factory=list, description="List of Sources used to generate the answer")
 
 
 ollamamodel = "qwen2.5-coder:7b"
-model = "gemini-2.5-flash"
-# model = "gemini-2.5-flash-lite"
+# model = "gemini-2.5-flash"
+model = "gemini-2.5-flash-lite"
+# model = "Gemini 1.5 Flash"
 # tavily = TavilyClient()
 
+# llm = ChatGoogleGenerativeAI()
+llm = ChatGoogleGenerativeAI(model=model,temperature=0)
+# llm = ChatOllama(model=ollamamodel,temperature=0)
 
-# using langchain TavilySearch -------------------------
-from langchain_tavily import TavilySearch
-tools = [TavilySearch()]
 
 # using custom developed tools using Tavily without using langchain TavilySearch -------------------------
 from tavily import TavilyClient
@@ -40,10 +51,14 @@ def search(query:str) -> str:
     return TavilyClient.search(query=query)
 tools = [search]
 
-# llm = ChatGoogleGenerativeAI()
-llm = ChatGoogleGenerativeAI(model=model,temperature=0)
-# llm = ChatOllama(model=ollamamodel,temperature=0)
+# using langchain TavilySearch -------------------------
+# from langchain_tavily import TavilySearch
+# tools = [TavilySearch()]
+
+agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
+
 agent = create_agent(model = llm, tools = tools)
+
 
 def main():
     print("Hello from Long-chain")
