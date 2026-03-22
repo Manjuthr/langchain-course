@@ -26,19 +26,21 @@ class AgentResponse(BaseModel):
     sources: List[Source] = Field(default_factory=list, description="List of Sources used to generate the answer")
 
 
-ollamamodel = "qwen2.5-coder:7b"
+# ollamamodel = "qwen2.5-coder:7b"
+ollamamodel = "llama3.1:8b"
 # model = "gemini-2.5-flash"
 model = "gemini-2.5-flash-lite"
 # model = "Gemini 1.5 Flash"
-# tavily = TavilyClient()
+
 
 # llm = ChatGoogleGenerativeAI()
-llm = ChatGoogleGenerativeAI(model=model,temperature=0)
-# llm = ChatOllama(model=ollamamodel,temperature=0)
+# llm = ChatGoogleGenerativeAI(model=model,temperature=0)
+llm = ChatOllama(model=ollamamodel,temperature=0)
 
 
 # using custom developed tools using Tavily without using langchain TavilySearch -------------------------
 from tavily import TavilyClient
+tavily = TavilyClient()
 @tool
 def search(query:str) -> str:
     """Tool that search over internet
@@ -48,14 +50,19 @@ def search(query:str) -> str:
     """
     print(f"Searching for {query}")
     # return "Stuttgart Weather is sunny"
-    return TavilyClient.search(query=query)
-tools = [search]
+    return tavily.search(query=query)
+
+# Using DuckDuckGo Tool 
+search_tool = DuckDuckGoSearchRun()
+tools = [search_tool]
+
+# tools = [search]
 
 # using langchain TavilySearch -------------------------
 # from langchain_tavily import TavilySearch
 # tools = [TavilySearch()]
 
-agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
+# agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
 
 agent = create_agent(model = llm, tools = tools)
 
@@ -68,6 +75,11 @@ def main():
     question = "Search for Latest updates from news articles about current US-Iran war?"
     result = agent.invoke({"messages": HumanMessage(content=question)})
     print(result)
+    print("\n\n")
+
+    final_answer = result["messages"][-1].content
+    print("\nAnswer:\n")
+    print(final_answer)
 
 
 if __name__ == "__main__":
